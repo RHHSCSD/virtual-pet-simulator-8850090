@@ -298,6 +298,9 @@ public class VirtualPet {
             //iterate through a file(10 lines long) for a specific int variable
             File f = new File(user+".txt");
             Scanner read = new Scanner(f);
+            read.nextLine();
+            read.nextLine();
+            read.nextLine();
             for (int i=0; i<10; i++)
             {
                 nextInt = read.nextInt();
@@ -321,16 +324,13 @@ public class VirtualPet {
     public static void main(String[] args) {
         // TODO code application logic here
         //declare final variables (constants)
-        final int MAXHEALTH;
-        final int MAXFOOD;
-        final int MAXENERGY;
+        final int[] maxStats = new int[3]; //[MAXHEALTH,MAXFOOD,MAXENERGY]
         //declare variables
         int menuNum;
         int statPool = 40;
         int money = 0;
-        int energy;
-        int health;
-        int food;
+        int[] currentStats = new int[3]; //[health,food,energy]
+        int[] actions = {0,0,0}; //[groom,feed,toy]
         boolean inMenu = true;
         boolean newFile = true;
         String petType;
@@ -357,7 +357,7 @@ public class VirtualPet {
                 switch (menuNum)
                 {
                     case 3: System.exit(0);
-                    case 2: break;
+                    case 2: System.out.println("\nHow to start:\ntype \"Start\" to create your pet if you havent already, and if you have,\nyou will be taken directly to your pet simulator!"); break;
                     case 1: inMenu = false; break;
                 }
             }
@@ -385,14 +385,14 @@ public class VirtualPet {
             }
             System.out.println("\nYour pet, named "+petName+", has been born!");
             //pet stats
-            MAXHEALTH = rng.nextInt(9)+10;
-            statPool -= MAXHEALTH;
-            MAXFOOD = rng.nextInt(statPool-20)+10;
-            statPool -= MAXFOOD;
-            MAXENERGY = statPool;
-            health = MAXHEALTH;
-            energy = MAXENERGY;
-            food = MAXFOOD;
+            maxStats[0] = rng.nextInt(9)+10;
+            statPool -= maxStats[0];
+            maxStats[1] = rng.nextInt(statPool-20)+10;
+            statPool -= maxStats[1];
+            maxStats[2] = statPool;
+            currentStats[0] = maxStats[0];
+            currentStats[1] = maxStats[1];
+            currentStats[2] = maxStats[2];
             try {
                 //write a file for all of the user's pet information
                 File f = new File(user+".txt");
@@ -400,12 +400,12 @@ public class VirtualPet {
                 write.println(password);
                 write.println(petType);
                 write.println(petName);
-                write.println(MAXHEALTH);
-                write.println(health);
-                write.println(MAXFOOD);
-                write.println(food);
-                write.println(MAXENERGY);
-                write.println(energy);
+                write.println(maxStats[0]);
+                write.println(currentStats[0]);
+                write.println(maxStats[1]);
+                write.println(currentStats[1]);
+                write.println(maxStats[2]);
+                write.println(currentStats[2]);
                 write.println(money);
                 write.close();
             }
@@ -424,29 +424,30 @@ public class VirtualPet {
                 petType = read.nextLine();
                 petName = read.nextLine();
                 read.nextInt();
-                health = read.nextInt();
+                currentStats[0] = read.nextInt();
                 read.nextInt();
-                food = read.nextInt();
+                currentStats[1] = read.nextInt();
                 read.nextInt();
-                energy = read.nextInt();
+                currentStats[2] = read.nextInt();
                 money = read.nextInt();
                 read.close();
             }
             catch (Exception e) {
                 System.out.println("\nError! Could not load data");
                 //variables need to be pointlessly assigned otherwise program crashes  :/
+                petType = "";
                 petName = "";
-                health = 0;
-                food = 0;
-                energy = 0;
+                currentStats[0] = 0;
+                currentStats[1] = 0;
+                currentStats[2] = 0;
                 System.exit(0);
             }
             //these final variables need to be assigned seperately from the rest otherwise netBeans crashes  :/
-            MAXHEALTH = netBeansStupid(0);
-            MAXFOOD = netBeansStupid(2);
-            MAXENERGY = netBeansStupid(4);
+            maxStats[0] = netBeansStupid(0);
+            maxStats[1] = netBeansStupid(2);
+            maxStats[2] = netBeansStupid(4);
         }
-        //return to main menu
+        //return to main menu (but with saved information)
         while (inMenu)
         {
             menuNum = mainMenu(true);
@@ -454,20 +455,33 @@ public class VirtualPet {
             switch (menuNum)
             {
                 case 3: System.exit(0);
-                case 2: break;
+                case 2: System.out.println("\nHow to play:\nearn money by playing minigames!\nbuy stuff with your money to make your pet happy!\nmaintain your pet for as long as possible!"); break;
                 case 1: inMenu = false; break;
             }
         }
         while (true)
         {
-            System.out.println("\nSelect an option(type \"1\" or \"2\")");
+            //user decides what they want to do with pet
+            System.out.println("\nSelect an option(enter a number as your choice)");
             System.out.println("");
             System.out.println("1.Play with "+petName);
             System.out.println("2.Earn money (Minigames)");
+            System.out.println("3.Leave game");
             System.out.println("");
             menuNum = in.nextInt();
+            //pet's stats lower after every decision
+            for (int i=0; i<currentStats.length; i++)
+            {
+                System.out.println(currentStats[i]);
+                if (currentStats[i] > 0)
+                    currentStats[i]--;
+                else
+                    System.out.println("\nYour pet needs attention!");
+                    break;
+            }
             if (menuNum == 1)
             {
+                //if user decides to play with pet (select action)
                 System.out.println("\nWhat would you like to do with your pet?(enter a number as your choice)");
                 System.out.println("");
                 System.out.println("1.Give "+petName+" a toy ($100)");
@@ -475,16 +489,17 @@ public class VirtualPet {
                 System.out.println("3.Groom "+petName);
                 System.out.println("");
                 menuNum = in.nextInt();
+                //switch statement for the user's action
                 switch (menuNum)
                 {
-                    case 1: if (money<100) {System.out.println("Not enough money");} else {energy = toyPet(MAXENERGY,energy);} break;
-                    case 2: if (money<800) {System.out.println("Not enough money");} else {food = feedPet(MAXFOOD,food);} break;
-                    case 3: health = groomPet(MAXHEALTH,health); break;
+                    case 1: if (money<100) {System.out.println("Not enough money");} else {currentStats[2] = toyPet(maxStats[2],currentStats[2]); actions[2]++;} break;
+                    case 2: if (money<800) {System.out.println("Not enough money");} else {currentStats[1] = feedPet(maxStats[1],currentStats[1]); actions[1]++;} break;
+                    case 3: currentStats[0] = groomPet(maxStats[0],currentStats[0]); actions[0]++; break;
                 }
             }
             else if (menuNum == 2)
             {
-                //if user decides to play with pet (game selection)
+                //if user decides to earn money (game selection)
                 System.out.println("\nSelect a game(type \"1\" or \"2\")");
                 System.out.println("");
                 System.out.println("1.Guess the number");
@@ -505,6 +520,49 @@ public class VirtualPet {
                 {
                     System.out.println("Invalid input\n");
                 }
+            }
+            else if (menuNum == 3)
+            {
+                //if user decides to leave the game
+                try {
+                    //save user's new pet information
+                    File f = new File(user+".txt");
+                    PrintWriter write = new PrintWriter(f);
+                    write.println(password);
+                    write.println(petType);
+                    write.println(petName);
+                    write.println(maxStats[0]);
+                    write.println(currentStats[0]);
+                    write.println(maxStats[1]);
+                    write.println(currentStats[1]);
+                    write.println(maxStats[2]);
+                    write.println(currentStats[2]);
+                    write.println(money);
+                    write.close();
+                }
+                catch (Exception e) {
+                    System.out.println("\nError! Could not save data");
+                }
+                //list user's actions
+                System.out.println("");
+                System.out.println("You have groomed your pet "+actions[0]+" times!");
+                System.out.println("You have fed your pet "+actions[1]+" times!");
+                System.out.println("You have given your pet a toy "+actions[2]+" times!");
+                //assign awards based on actions
+                if (actions[0]+actions[1]+actions[2] >= 100)
+                {
+                    System.out.println("\nCongratulations! You earned Video Game Addict!");
+                }
+                else if (actions[0]+actions[1]+actions[2] >= 50)
+                {
+                    System.out.println("\nCongratulations! You earned Procrastinator!");
+                }
+                else if (actions[0]+actions[1]+actions[2] >= 20)
+                {
+                    System.out.println("\nCongratulations! You earned Time Waster!");
+                }
+                //exit game
+                System.exit(0);
             }
             else
             {
